@@ -1,0 +1,134 @@
+basePath: /
+host: localhost:8081
+info:
+  contact: {}
+  description: This is a sample server server.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Rate Exchange API
+  version: "1.0"
+paths:
+  /:
+    post:
+      consumes:
+      - application/json
+      description: Inserts new exchange rate
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: InsertSingleExchangeRate
+      tags:
+      - exchange-rates
+  /all-from-date/{date}:
+    get:
+      consumes:
+      - application/json
+      description: Returns all exchange rates for the given date
+      parameters:
+      - description: Date for which exchange rates should be retrived
+        in: path
+        name: date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: GetAllExchangeRatesFromDate
+      tags:
+      - exchange-rates
+  /check:
+    get:
+      description: basic healthcheck
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: healthcheck
+      tags:
+      - healthcheck
+  /last:
+    get:
+      consumes:
+      - application/json
+      description: Returns most recent exchange rate source - destinaion currencies
+      parameters:
+      - description: source currency, default is USD
+        in: query
+        name: source
+        required: true
+        type: string
+      - description: destination, currency
+        in: query
+        name: destination
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: GetLastExchangeRate
+      tags:
+      - exchange-rates
+  /range/:
+    get:
+      consumes:
+      - application/json
+      description: Returns exchange rates for currencies in the time period
+      parameters:
+      - description: source currency, default is USD
+        in: query
+        name: source
+        required: true
+        type: string
+      - description: destination, currency
+        in: query
+        name: destination
+        type: string
+      - description: From date, inclusive
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: Till date, exclusive
+        in: query
+        name: till
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: GetrangeExchangeRate
+      tags:
+      - exchange-rates
+schemes:
+- http
+swagger: "2.0"
