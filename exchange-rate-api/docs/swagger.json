@@ -4,7 +4,7 @@
     ],
     "swagger": "2.0",
     "info": {
-        "description": "This is a sample server server.",
+        "description": "Provides basic functionality for checking currency exchange rate.",
         "title": "Rate Exchange API",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {},
@@ -17,7 +17,56 @@
     "host": "localhost:8081",
     "basePath": "/",
     "paths": {
-        "/": {
+        "/check": {
+            "get": {
+                "description": "basic healthcheck",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "healthcheck"
+                ],
+                "summary": "healthcheck",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/currencies": {
+            "get": {
+                "description": "Returns list of all currencies",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "currencies"
+                ],
+                "summary": "GetAllCurrencies",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/exchange-rate": {
             "post": {
                 "description": "Inserts new exchange rate",
                 "consumes": [
@@ -27,7 +76,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "exchange-rates"
+                    "exchange-rate"
                 ],
                 "summary": "InsertSingleExchangeRate",
                 "responses": {
@@ -43,7 +92,7 @@
                 }
             }
         },
-        "/all-from-date/{date}": {
+        "/exchange-rate/all-from-date/{date}": {
             "get": {
                 "description": "Returns all exchange rates for the given date",
                 "consumes": [
@@ -53,7 +102,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "exchange-rates"
+                    "exchange-rate"
                 ],
                 "summary": "GetAllExchangeRatesFromDate",
                 "parameters": [
@@ -78,30 +127,7 @@
                 }
             }
         },
-        "/check": {
-            "get": {
-                "description": "basic healthcheck",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "healthcheck"
-                ],
-                "summary": "healthcheck",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/last": {
+        "/exchange-rate/last": {
             "get": {
                 "description": "Returns most recent exchange rate source - destinaion currencies",
                 "consumes": [
@@ -111,7 +137,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "exchange-rates"
+                    "exchange-rate"
                 ],
                 "summary": "GetLastExchangeRate",
                 "parameters": [
@@ -119,30 +145,30 @@
                         "type": "string",
                         "description": "source currency, default is USD",
                         "name": "source",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "type": "string",
                         "description": "destination, currency",
                         "name": "destination",
-                        "in": "query"
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/models.ExchangeRate"
                         }
+                    },
+                    "404": {
+                        "description": ""
                     }
                 }
             }
         },
-        "/range/": {
+        "/exchange-rate/range": {
             "get": {
                 "description": "Returns exchange rates for currencies in the time period",
                 "consumes": [
@@ -152,7 +178,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "exchange-rates"
+                    "exchange-rate"
                 ],
                 "summary": "GetrangeExchangeRate",
                 "parameters": [
@@ -165,7 +191,7 @@
                     },
                     {
                         "type": "string",
-                        "description": "destination, currency",
+                        "description": "destination currency",
                         "name": "destination",
                         "in": "query"
                     },
@@ -194,6 +220,25 @@
                             }
                         }
                     }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.ExchangeRate": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "destination": {
+                    "type": "string"
+                },
+                "rate": {
+                    "type": "number"
+                },
+                "source": {
+                    "type": "string"
                 }
             }
         }

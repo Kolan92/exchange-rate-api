@@ -1,7 +1,5 @@
 CREATE USER exchange_rate_api_user WITH PASSWORD '123';
 
-CREATE DATABASE exchange_rate_api OWNER exchange_rate_api_user;
-
 CREATE TABLE currencies_codes (
     id serial PRIMARY KEY,
     code VARCHAR(3) UNIQUE NOT NULL

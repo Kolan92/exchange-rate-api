@@ -1,8 +1,20 @@
 basePath: /
+definitions:
+  models.ExchangeRate:
+    properties:
+      date:
+        type: string
+      destination:
+        type: string
+      rate:
+        type: number
+      source:
+        type: string
+    type: object
 host: localhost:8081
 info:
   contact: {}
-  description: This is a sample server server.
+  description: Provides basic functionality for checking currency exchange rate.
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -10,7 +22,39 @@ info:
   title: Rate Exchange API
   version: "1.0"
 paths:
-  /:
+  /check:
+    get:
+      description: basic healthcheck
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: healthcheck
+      tags:
+      - healthcheck
+  /currencies:
+    get:
+      consumes:
+      - application/json
+      description: Returns list of all currencies
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: string
+            type: array
+      summary: GetAllCurrencies
+      tags:
+      - currencies
+  /exchange-rate:
     post:
       consumes:
       - application/json
@@ -26,8 +70,8 @@ paths:
             type: object
       summary: InsertSingleExchangeRate
       tags:
-      - exchange-rates
-  /all-from-date/{date}:
+      - exchange-rate
+  /exchange-rate/all-from-date/{date}:
     get:
       consumes:
       - application/json
@@ -49,23 +93,8 @@ paths:
             type: object
       summary: GetAllExchangeRatesFromDate
       tags:
-      - exchange-rates
-  /check:
-    get:
-      description: basic healthcheck
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: healthcheck
-      tags:
-      - healthcheck
-  /last:
+      - exchange-rate
+  /exchange-rate/last:
     get:
       consumes:
       - application/json
@@ -74,11 +103,11 @@ paths:
       - description: source currency, default is USD
         in: query
         name: source
-        required: true
         type: string
       - description: destination, currency
         in: query
         name: destination
+        required: true
         type: string
       produces:
       - application/json
@@ -86,13 +115,13 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/models.ExchangeRate'
+        "404":
+          description: ""
       summary: GetLastExchangeRate
       tags:
-      - exchange-rates
-  /range/:
+      - exchange-rate
+  /exchange-rate/range:
     get:
       consumes:
       - application/json
@@ -103,7 +132,7 @@ paths:
         name: source
         required: true
         type: string
-      - description: destination, currency
+      - description: destination currency
         in: query
         name: destination
         type: string
@@ -128,7 +157,7 @@ paths:
             type: object
       summary: GetrangeExchangeRate
       tags:
-      - exchange-rates
+      - exchange-rate
 schemes:
 - http
 swagger: "2.0"

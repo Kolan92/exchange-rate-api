@@ -21,7 +21,56 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/": {
+        "/check": {
+            "get": {
+                "description": "basic healthcheck",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "healthcheck"
+                ],
+                "summary": "healthcheck",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/currencies": {
+            "get": {
+                "description": "Returns list of all currencies",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "currencies"
+                ],
+                "summary": "GetAllCurrencies",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/exchange-rate": {
             "post": {
                 "description": "Inserts new exchange rate",
                 "consumes": [
@@ -31,7 +80,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "exchange-rates"
+                    "exchange-rate"
                 ],
                 "summary": "InsertSingleExchangeRate",
                 "responses": {
@@ -47,7 +96,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/all-from-date/{date}": {
+        "/exchange-rate/all-from-date/{date}": {
             "get": {
                 "description": "Returns all exchange rates for the given date",
                 "consumes": [
@@ -57,7 +106,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "exchange-rates"
+                    "exchange-rate"
                 ],
                 "summary": "GetAllExchangeRatesFromDate",
                 "parameters": [
@@ -82,30 +131,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/check": {
-            "get": {
-                "description": "basic healthcheck",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "healthcheck"
-                ],
-                "summary": "healthcheck",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/last": {
+        "/exchange-rate/last": {
             "get": {
                 "description": "Returns most recent exchange rate source - destinaion currencies",
                 "consumes": [
@@ -115,7 +141,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "exchange-rates"
+                    "exchange-rate"
                 ],
                 "summary": "GetLastExchangeRate",
                 "parameters": [
@@ -123,30 +149,30 @@ const docTemplate = `{
                         "type": "string",
                         "description": "source currency, default is USD",
                         "name": "source",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "type": "string",
                         "description": "destination, currency",
                         "name": "destination",
-                        "in": "query"
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/models.ExchangeRate"
                         }
+                    },
+                    "404": {
+                        "description": ""
                     }
                 }
             }
         },
-        "/range/": {
+        "/exchange-rate/range": {
             "get": {
                 "description": "Returns exchange rates for currencies in the time period",
                 "consumes": [
@@ -156,7 +182,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "exchange-rates"
+                    "exchange-rate"
                 ],
                 "summary": "GetrangeExchangeRate",
                 "parameters": [
@@ -169,7 +195,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "destination, currency",
+                        "description": "destination currency",
                         "name": "destination",
                         "in": "query"
                     },
@@ -201,6 +227,25 @@ const docTemplate = `{
                 }
             }
         }
+    },
+    "definitions": {
+        "models.ExchangeRate": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "destination": {
+                    "type": "string"
+                },
+                "rate": {
+                    "type": "number"
+                },
+                "source": {
+                    "type": "string"
+                }
+            }
+        }
     }
 }`
 
@@ -211,7 +256,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{"http"},
 	Title:            "Rate Exchange API",
-	Description:      "This is a sample server server.",
+	Description:      "Provides basic functionality for checking currency exchange rate.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 }
