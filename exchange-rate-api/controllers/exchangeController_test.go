@@ -116,6 +116,12 @@ func TestReturnsCurrencyCodes(t *testing.T) {
 	assert.Equal(t, exppectedCurrencyCodes, currencyCodes)
 }
 
+func TestGetAllExchangeRatesFromDate(t *testing.T) {
+	setup()
+	controller.GetAllExchangeRatesFromDate(ginContext)
+
+}
+
 func setDefaultCurrenciesInParams() {
 	setQueryString("source=USD&destination=CHF")
 }

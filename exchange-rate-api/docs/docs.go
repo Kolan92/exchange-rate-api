@@ -112,7 +112,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Date for which exchange rates should be retrived",
+                        "description": "Date for which exchange rates should be retrived. Date must be formated in YYYY-MM-DD",
                         "name": "date",
                         "in": "path",
                         "required": true
@@ -122,9 +122,9 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.ExchangeRate"
                             }
                         }
                     }
@@ -133,7 +133,7 @@ const docTemplate = `{
         },
         "/exchange-rate/last": {
             "get": {
-                "description": "Returns most recent exchange rate source - destinaion currencies",
+                "description": "Returns most recent exchange rate  which is not null in database for source - destinaion currencies",
                 "consumes": [
                     "application/json"
                 ],
@@ -184,31 +184,31 @@ const docTemplate = `{
                 "tags": [
                     "exchange-rate"
                 ],
-                "summary": "GetrangeExchangeRate",
+                "summary": "GetRangeExchangeRate",
                 "parameters": [
                     {
                         "type": "string",
                         "description": "source currency, default is USD",
                         "name": "source",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "type": "string",
                         "description": "destination currency",
                         "name": "destination",
-                        "in": "query"
+                        "in": "query",
+                        "required": true
                     },
                     {
                         "type": "string",
-                        "description": "From date, inclusive",
+                        "description": "From date, inclusive, must be formated in YYYY-MM-DD",
                         "name": "from",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Till date, exclusive",
+                        "description": "Till date, exclusive, must be formated in YYYY-MM-DD",
                         "name": "till",
                         "in": "query",
                         "required": true
@@ -218,9 +218,9 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.ExchangeRate"
                             }
                         }
                     }

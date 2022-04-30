@@ -77,7 +77,8 @@ paths:
       - application/json
       description: Returns all exchange rates for the given date
       parameters:
-      - description: Date for which exchange rates should be retrived
+      - description: Date for which exchange rates should be retrived. Date must be
+          formated in YYYY-MM-DD
         in: path
         name: date
         required: true
@@ -88,9 +89,9 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            items:
+              $ref: '#/definitions/models.ExchangeRate'
+            type: array
       summary: GetAllExchangeRatesFromDate
       tags:
       - exchange-rate
@@ -98,7 +99,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Returns most recent exchange rate source - destinaion currencies
+      description: Returns most recent exchange rate  which is not null in database
+        for source - destinaion currencies
       parameters:
       - description: source currency, default is USD
         in: query
@@ -130,18 +132,18 @@ paths:
       - description: source currency, default is USD
         in: query
         name: source
-        required: true
         type: string
       - description: destination currency
         in: query
         name: destination
+        required: true
         type: string
-      - description: From date, inclusive
+      - description: From date, inclusive, must be formated in YYYY-MM-DD
         in: query
         name: from
         required: true
         type: string
-      - description: Till date, exclusive
+      - description: Till date, exclusive, must be formated in YYYY-MM-DD
         in: query
         name: till
         required: true
@@ -152,10 +154,10 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: GetrangeExchangeRate
+            items:
+              $ref: '#/definitions/models.ExchangeRate'
+            type: array
+      summary: GetRangeExchangeRate
       tags:
       - exchange-rate
 schemes:

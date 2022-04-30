@@ -1,6 +1,10 @@
 package testhelpers
 
-import "github.com/kolan92/exchange-rate-api/models"
+import (
+	"time"
+
+	"github.com/kolan92/exchange-rate-api/models"
+)
 
 type MockRepository struct {
 	CodesCurrenciesIdsMap                  map[string]int
@@ -32,4 +36,12 @@ func (m *MockRepository) GetLastExchangeRate(sourceCurrencyId, destinationCurren
 	m.SourceCurrencyId = sourceCurrencyId
 	m.DestinaionCurrencyId = destinationCurrencyId
 	return m.LatestExchangeRate, m.LatestExchangeRateError
+}
+
+func (m *MockRepository) GetAllExchangeRatesFromDate(date time.Time) ([]models.ExchangeRate, error) {
+	return []models.ExchangeRate{}, nil
+}
+
+func (m *MockRepository) GetRangeExchangeRate(sourceCurrencyId, destinationCurrencyId int, from, till *time.Time) ([]models.ExchangeRate, error) {
+	return []models.ExchangeRate{}, nil
 }

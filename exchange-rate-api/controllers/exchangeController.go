@@ -1,13 +1,17 @@
 package controllers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kolan92/exchange-rate-api/repositories"
 	"gorm.io/gorm"
 )
+
+const dateLayout = "2006-01-02"
 
 type ExchangeRatesController struct {
 	repo repositories.CurrenciesRepository
@@ -32,20 +36,15 @@ func (controller *ExchangeRatesController) RegisterRouter(routerGroup *gin.Route
 			controller.GetLastExchangeRate(c)
 		})
 
-		exchangeRate.GET("/all-from-date/:date", GetAllExchangeRatesFromDate)
+		exchangeRate.GET("/all-from-date/:date", func(c *gin.Context) {
+			controller.GetAllExchangeRatesFromDate(c)
+		})
 
 		exchangeRate.POST("/", InsertSingleExchangeRate)
 
 		exchangeRate.GET("/range/", func(c *gin.Context) {
-			const fromParamKey = "from"
 
-			fromParam := c.Query(fromParamKey)
-
-			const tillParamKey = "till"
-
-			tillParam := c.Query(tillParamKey)
-
-			c.JSON(http.StatusOK, gin.H{"check": "ok", fromParamKey: fromParam, tillParamKey: tillParam})
+			controller.GetRangeExchangeRate(c)
 		})
 	}
 }
@@ -68,7 +67,7 @@ func (c *ExchangeRatesController) GetAllCurrencies(g *gin.Context) {
 // @Schemes
 // @Accept		json
 // @Produce		json
-// @Description Returns most recent exchange rate source - destinaion currencies
+// @Description Returns most recent exchange rate  which is not null in database for source - destinaion currencies
 // @Param		source		query	string	false	"source currency, default is USD"
 // @Param		destination	query	string	true	"destination, currency"
 // @Router		/exchange-rate/last	[get]
@@ -77,35 +76,10 @@ func (c *ExchangeRatesController) GetAllCurrencies(g *gin.Context) {
 func (c *ExchangeRatesController) GetLastExchangeRate(g *gin.Context) {
 	currencyCodesMap := c.repo.GetCurrenciesCodesIdsMap()
 
-	const sourceCurrencyParamKey = "source"
-	sourceCurrencyCode := g.Query(sourceCurrencyParamKey)
+	sourceCurrencyId, destinationCurrencyId, err := getCurrenciesIds(g, currencyCodesMap)
 
-	const destinationCurrencyParamKey = "destination"
-	destinationCurrencyCode := g.Query(destinationCurrencyParamKey)
-
-	if len(sourceCurrencyCode) == 0 {
-		sourceCurrencyCode = "USD"
-	}
-
-	if len(destinationCurrencyCode) == 0 {
-		g.JSON(http.StatusBadRequest, gin.H{"error": "missing destination currency"})
-		return
-	}
-
-	if sourceCurrencyCode == destinationCurrencyCode {
-		g.JSON(http.StatusBadRequest, gin.H{"error": "source and destination currency are the same"})
-		return
-	}
-
-	sourceCurrencyId, found := currencyCodesMap[sourceCurrencyCode]
-	if !found {
-		g.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Unknown %s source currency", sourceCurrencyCode)})
-		return
-	}
-
-	destinationCurrencyId, found := currencyCodesMap[destinationCurrencyCode]
-	if !found {
-		g.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Unknown %s destination currency", destinationCurrencyCode)})
+	if err != nil {
+		g.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -124,11 +98,24 @@ func (c *ExchangeRatesController) GetLastExchangeRate(g *gin.Context) {
 // @Accept		json
 // @Produce		json
 // @Description Returns all exchange rates for the given date
-// @Param		date	path	string	true	"Date for which exchange rates should be retrived"
+// @Param		date	path	string	true	"Date for which exchange rates should be retrived. Date must be formated in YYYY-MM-DD"
 // @Router		/exchange-rate/all-from-date/{date}	[get]
-// @Success 	200		{object}	map[string]string
-func GetAllExchangeRatesFromDate(g *gin.Context) {
-	g.JSON(http.StatusOK, gin.H{"check": "ok"})
+// @Success 	200		{object}	[]models.ExchangeRate
+func (c *ExchangeRatesController) GetAllExchangeRatesFromDate(g *gin.Context) {
+	const dateParmKey = "date"
+	dateParam := g.Param(dateParmKey)
+	dateValue, err := time.Parse(dateLayout, dateParam)
+	if err != nil {
+		g.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("date %s is in incorrect format", dateParam)})
+		return
+	}
+	exchangeRatesFromDate, err := c.repo.GetAllExchangeRatesFromDate(dateValue)
+
+	if err != nil {
+		g.JSON(errToStatusCode(err), gin.H{"error": err.Error()})
+	} else {
+		g.JSON(http.StatusOK, exchangeRatesFromDate)
+	}
 }
 
 // @Summary InsertSingleExchangeRate
@@ -143,20 +130,35 @@ func InsertSingleExchangeRate(g *gin.Context) {
 	g.JSON(http.StatusOK, gin.H{"check": "ok"})
 }
 
-// @Summary GetrangeExchangeRate
+// @Summary GetRangeExchangeRate
 // @Tags		exchange-rate
 // @Schemes
 // @Accept		json
 // @Produce		json
 // @Description Returns exchange rates for currencies in the time period
-// @Param		source		query	string	true	"source currency, default is USD"
-// @Param		destination	query	string	false	"destination currency"
-// @Param		from	query	string	true	"From date, inclusive"
-// @Param		till	query	string	true	"Till date, exclusive"
+// @Param		source		query	string	false	"source currency, default is USD"
+// @Param		destination	query	string	true	"destination currency"
+// @Param		from	query	string	true	"From date, inclusive, must be formated in YYYY-MM-DD"
+// @Param		till	query	string	true	"Till date, exclusive, must be formated in YYYY-MM-DD"
 // @Router		/exchange-rate/range [get]
-// @Success		200	{object}	map[string]string
-func GetrangeExchangeRate(g *gin.Context) {
-	g.JSON(http.StatusOK, gin.H{"check": "ok"})
+// @Success		200	{object}	[]models.ExchangeRate
+func (c *ExchangeRatesController) GetRangeExchangeRate(g *gin.Context) {
+	currencyCodesMap := c.repo.GetCurrenciesCodesIdsMap()
+
+	sourceCurrencyId, destinationCurrencyId, err := getCurrenciesIds(g, currencyCodesMap)
+
+	from, till, err := parseFromAdnTillDates(g)
+	if err != nil {
+		g.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	exchangeRates, err := c.repo.GetRangeExchangeRate(sourceCurrencyId, destinationCurrencyId, from, till)
+
+	if err != nil {
+		g.JSON(errToStatusCode(err), gin.H{"error": err.Error()})
+	} else {
+		g.JSON(http.StatusOK, exchangeRates)
+	}
 }
 
 func errToStatusCode(err error) int {
@@ -166,4 +168,61 @@ func errToStatusCode(err error) int {
 	default:
 		return http.StatusInternalServerError
 	}
+}
+
+func getCurrenciesIds(g *gin.Context, currencyCodesMap map[string]int) (sourceCurrencyId, destinationCurrencyId int, err error) {
+
+	const sourceCurrencyParamKey = "source"
+	sourceCurrencyCode := g.Query(sourceCurrencyParamKey)
+
+	const destinationCurrencyParamKey = "destination"
+	destinationCurrencyCode := g.Query(destinationCurrencyParamKey)
+
+	if len(sourceCurrencyCode) == 0 {
+		sourceCurrencyCode = "USD"
+	}
+
+	if len(destinationCurrencyCode) == 0 {
+		return 0, 0, errors.New("missing destination currency")
+	}
+
+	if sourceCurrencyCode == destinationCurrencyCode {
+		return 0, 0, errors.New("source and destination currency are the same")
+	}
+
+	sourceCurrencyId, found := currencyCodesMap[sourceCurrencyCode]
+	if !found {
+		return 0, 0, errors.New(fmt.Sprintf("Unknown %s source currency", sourceCurrencyCode))
+	}
+
+	destinationCurrencyId, found = currencyCodesMap[destinationCurrencyCode]
+	if !found {
+		return 0, 0, errors.New(fmt.Sprintf("Unknown %s destination currency", destinationCurrencyCode))
+	}
+
+	return sourceCurrencyId, destinationCurrencyId, nil
+}
+
+func parseFromAdnTillDates(g *gin.Context) (from, till *time.Time, err error) {
+	const fromParamKey = "from"
+
+	fromParam := g.Query(fromParamKey)
+	fromValue, err := time.Parse(dateLayout, fromParam)
+	if err != nil {
+		return nil, nil, errors.New(fmt.Sprintf("from %s is in incorrect format", fromParam))
+	}
+
+	const tillParamKey = "till"
+
+	tillParam := g.Query(tillParamKey)
+	tillValue, err := time.Parse(dateLayout, tillParam)
+	if err != nil {
+		return nil, nil, errors.New(fmt.Sprintf("till %s is in incorrect format", tillParam))
+	}
+
+	if fromValue.After(tillValue) {
+		return nil, nil, errors.New("from must be before till")
+	}
+
+	return &fromValue, &tillValue, nil
 }

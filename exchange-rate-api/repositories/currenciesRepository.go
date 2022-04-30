@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/kolan92/exchange-rate-api/models"
 	"gorm.io/driver/postgres"
@@ -21,6 +22,8 @@ type CurrenciesRepository interface {
 	GetCurrenciesCodesIdsMap() map[string]int
 	GetCurrenciesCodes() []string
 	GetLastExchangeRate(sourceCurrencyId, destinationCurrencyId int) (*models.ExchangeRate, error)
+	GetAllExchangeRatesFromDate(date time.Time) ([]models.ExchangeRate, error)
+	GetRangeExchangeRate(sourceCurrencyId, destinationCurrencyId int, from, till *time.Time) ([]models.ExchangeRate, error)
 }
 
 type PostgresCurrenciesRepository struct {
@@ -86,4 +89,49 @@ func (r *PostgresCurrenciesRepository) GetLastExchangeRate(sourceCurrencyId, des
 	}
 
 	return &exchangeRate, nil
+}
+
+func (r *PostgresCurrenciesRepository) GetAllExchangeRatesFromDate(date time.Time) ([]models.ExchangeRate, error) {
+	exchangeRates := []models.ExchangeRate{}
+
+	const query string = `
+	SELECT destination_code.code as destination, source_code.code as source, rates.date, rates.rate
+		FROM public.exchange_rates rates
+		JOIN public.currencies_codes source_code 
+		ON rates.source_currency_id = source_code.id
+		JOIN public.currencies_codes destination_code 
+		ON rates.destination_currency_id = destination_code.id
+		WHERE rates.date = ?
+		ORDER BY rates.date DESC
+	`
+
+	if err := r.db.Raw(query, date).Scan(&exchangeRates).Error; err != nil {
+		return nil, err
+	}
+
+	return exchangeRates, nil
+}
+
+func (r *PostgresCurrenciesRepository) GetRangeExchangeRate(sourceCurrencyId, destinationCurrencyId int, from, till *time.Time) ([]models.ExchangeRate, error) {
+	exchangeRates := []models.ExchangeRate{}
+
+	const query string = `
+	SELECT destination_code.code as destination, source_code.code as source, rates.date, rates.rate
+		FROM public.exchange_rates rates
+		JOIN public.currencies_codes source_code 
+		ON rates.source_currency_id = source_code.id
+		JOIN public.currencies_codes destination_code 
+		ON rates.destination_currency_id = destination_code.id
+		WHERE rates.source_currency_id = ?
+		AND rates.destination_currency_id = ?
+		AND rates.date >= ?
+		AND rates.date < ?
+		ORDER BY rates.date DESC
+	`
+
+	if err := r.db.Raw(query, sourceCurrencyId, destinationCurrencyId, from, till).Scan(&exchangeRates).Error; err != nil {
+		return nil, err
+	}
+
+	return exchangeRates, nil
 }
