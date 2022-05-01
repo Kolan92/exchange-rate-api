@@ -1,21 +1,22 @@
 # Rate Exchange API
 
-Databases stores all rates as nullable `NUMERIC(15, 6)`. I choose that type as all exchange rates from \*.csv are coverd by it. If need ic an be easily changed to hold values with higher precision.
+Databases stores all rates as nullable `NUMERIC(15, 6)`. I chose that type as all exchange rates from \*.csv are covered by it. If need it can be easily changed to hold values with higher precision.
 
-User can insert null values in database. Null exchange rates are also included in endpoints returning more than one exchange rate.
+User can insert null values to database. Null exchange rates are also included in endpoints returning more than one exchange rate.
 Only when user request last exchange rate, the last non-null value is returned.
 
 ## Run app
 
-For both wya swagger UI is available here: http://localhost:8081/swagger/index.html
+App can run in docker compose or in standalone mode.
+For both ways swagger UI is available here: http://localhost:8081/swagger/index.html
 
 ### Docker compose
 
-Just run `docker compose up` in root direcotry
+Just run `docker compose up` in root directory
 
 ### Standalone
 
-Those env variables are required to run app. If postgres container port 5432 is exposed, api can connect to it when it is executed outside of docker.
+Those env variables are required to run the app. If postgres container port 5432 is exposed, api can connect to it when it is executed outside of docker.
 
 ```bash
 export DB_USER=root

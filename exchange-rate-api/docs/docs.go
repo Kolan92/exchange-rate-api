@@ -155,14 +155,14 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "source currency, default is USD",
-                        "name": "source",
+                        "description": "destination currency, default is USD",
+                        "name": "destination",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "destination, currency",
-                        "name": "destination",
+                        "description": "source, currency",
+                        "name": "source",
                         "in": "query",
                         "required": true
                     }
@@ -196,14 +196,14 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "source currency, default is USD",
-                        "name": "source",
+                        "description": "destination currency, default is USD",
+                        "name": "destination",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "destination currency",
-                        "name": "destination",
+                        "description": "source currency",
+                        "name": "source",
                         "in": "query",
                         "required": true
                     },

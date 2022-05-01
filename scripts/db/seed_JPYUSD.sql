@@ -1,9 +1,9 @@
--- USD 1
 -- JPY 4
+-- USD 1
 INSERT INTO
     exchange_rates (
-        source_currency_id,
         destination_currency_id,
+        source_currency_id,
         date,
         rate
     )

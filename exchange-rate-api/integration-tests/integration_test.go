@@ -36,8 +36,8 @@ func TestRetrivesCurrenciesForDateRange(t *testing.T) {
 	relativeUrl := &url.URL{Path: getRangeExchangeRatesPath}
 	url := baseURL.ResolveReference(relativeUrl)
 	query := url.Query()
-	query.Add("source", "USD")
-	query.Add("destination", "CHF")
+	query.Add("destination", "USD")
+	query.Add("source", "CHF")
 	query.Add("from", "2017-05-01")
 	query.Add("till", "2017-05-06")
 	url.RawQuery = query.Encode()
@@ -61,7 +61,7 @@ func TestRetrivesCurrenciesForDateRange(t *testing.T) {
 	assert.Len(t, exchangeRates, 5)
 
 	for _, exchangeRate := range exchangeRates {
-		assert.Equal(t, "USD", exchangeRate.Source)
-		assert.Equal(t, "CHF", exchangeRate.Destination)
+		assert.Equal(t, "USD", exchangeRate.Destination)
+		assert.Equal(t, "CHF", exchangeRate.Source)
 	}
 }

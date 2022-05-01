@@ -115,13 +115,13 @@ paths:
       description: Returns most recent exchange rate  which is not null in database
         for source - destinaion currencies
       parameters:
-      - description: source currency, default is USD
-        in: query
-        name: source
-        type: string
-      - description: destination, currency
+      - description: destination currency, default is USD
         in: query
         name: destination
+        type: string
+      - description: source, currency
+        in: query
+        name: source
         required: true
         type: string
       produces:
@@ -142,13 +142,13 @@ paths:
       - application/json
       description: Returns exchange rates for currencies in the time period
       parameters:
-      - description: source currency, default is USD
-        in: query
-        name: source
-        type: string
-      - description: destination currency
+      - description: destination currency, default is USD
         in: query
         name: destination
+        type: string
+      - description: source currency
+        in: query
+        name: source
         required: true
         type: string
       - description: From date, inclusive, must be formated in YYYY-MM-DD

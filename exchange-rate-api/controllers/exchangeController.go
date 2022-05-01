@@ -73,8 +73,8 @@ func (c *ExchangeRatesController) GetAllCurrencies(g *gin.Context) {
 // @Accept		json
 // @Produce		json
 // @Description Returns most recent exchange rate  which is not null in database for source - destinaion currencies
-// @Param		source		query	string	false	"source currency, default is USD"
-// @Param		destination	query	string	true	"destination, currency"
+// @Param		destination		query	string	false	"destination currency, default is USD"
+// @Param		source	query	string	true	"source, currency"
 // @Router		/exchange-rate/last	[get]
 // @Success 	200		{object}	models.ExchangeRate
 // @Success 	404
@@ -181,8 +181,8 @@ func (c *ExchangeRatesController) InsertExchangeRate(g *gin.Context) {
 // @Accept		json
 // @Produce		json
 // @Description Returns exchange rates for currencies in the time period
-// @Param		source		query	string	false	"source currency, default is USD"
-// @Param		destination	query	string	true	"destination currency"
+// @Param		destination		query	string	false	"destination currency, default is USD"
+// @Param		source	query	string	true	"source currency"
 // @Param		from	query	string	true	"From date, inclusive, must be formated in YYYY-MM-DD"
 // @Param		till	query	string	true	"Till date, exclusive, must be formated in YYYY-MM-DD"
 // @Router		/exchange-rate/range [get]
@@ -226,11 +226,11 @@ func getCurrenciesIds(g *gin.Context, currencyCodesMap map[string]int) (sourceCu
 	destinationCurrencyCode := g.Query(destinationCurrencyParamKey)
 
 	if len(sourceCurrencyCode) == 0 {
-		sourceCurrencyCode = "USD"
+		return 0, 0, errors.New("missing source currency")
 	}
 
 	if len(destinationCurrencyCode) == 0 {
-		return 0, 0, errors.New("missing destination currency")
+		destinationCurrencyCode = "USD"
 	}
 
 	if sourceCurrencyCode == destinationCurrencyCode {

@@ -65,9 +65,9 @@ func TestGetLastExchangeRateReturnsError(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, recorder.Code)
 }
 
-func TestGetLastExchangeMissingDestinationCurrency(t *testing.T) {
+func TestGetLastExchangeMissingSourceCurrency(t *testing.T) {
 	setup()
-	setQueryString("source=USD&destination=PLN")
+	setQueryString("destination=USD&source=PLN")
 
 	controller.GetLastExchangeRate(ginContext)
 	assert.Equal(t, http.StatusBadRequest, recorder.Code)
@@ -81,18 +81,18 @@ func TestGetLastExchangeSameSourceAndDestinationCurrency(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, recorder.Code)
 }
 
-func TestGetLastExchangeMissingSourceMapsToUSDCurrency(t *testing.T) {
+func TestGetLastExchangeMissingDestinationMapsToUSDCurrency(t *testing.T) {
 	setup()
-	setQueryString("destination=CHF")
+	setQueryString("source=CHF")
 	repository.LatestExchangeRate = &models.ExchangeRate{
-		Source:      "USD",
-		Destination: "CHF",
+		Source:      "CHF",
+		Destination: "USD",
 		Date:        time.Date(2022, 04, 30, 10, 00, 00, 0, time.UTC),
 	}
 
 	controller.GetLastExchangeRate(ginContext)
-	assert.Equal(t, repository.SourceCurrencyId, 1)
-	assert.Equal(t, repository.DestinaionCurrencyId, 2)
+	assert.Equal(t, repository.SourceCurrencyId, 2)
+	assert.Equal(t, repository.DestinaionCurrencyId, 1)
 	assert.Equal(t, http.StatusOK, recorder.Code)
 }
 
@@ -114,12 +114,6 @@ func TestReturnsCurrencyCodes(t *testing.T) {
 
 	exppectedCurrencyCodes := []string{"USD", "CHF"}
 	assert.Equal(t, exppectedCurrencyCodes, currencyCodes)
-}
-
-func TestGetAllExchangeRatesFromDate(t *testing.T) {
-	setup()
-	controller.GetAllExchangeRatesFromDate(ginContext)
-
 }
 
 func setDefaultCurrenciesInParams() {
