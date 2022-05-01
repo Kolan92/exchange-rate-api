@@ -237,7 +237,6 @@
             "required": [
                 "date",
                 "destination",
-                "rate",
                 "source"
             ],
             "properties": {

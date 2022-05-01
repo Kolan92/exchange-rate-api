@@ -242,7 +242,6 @@ const docTemplate = `{
             "required": [
                 "date",
                 "destination",
-                "rate",
                 "source"
             ],
             "properties": {

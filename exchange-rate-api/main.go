@@ -10,6 +10,7 @@ import (
 	"github.com/kolan92/exchange-rate-api/controllers"
 	docs "github.com/kolan92/exchange-rate-api/docs"
 	"github.com/kolan92/exchange-rate-api/repositories"
+	"github.com/shopspring/decimal"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
@@ -28,6 +29,7 @@ import (
 func main() {
 	docs.SwaggerInfo.BasePath = "/api/v1"
 	docs.SwaggerInfo.Host = "localhost:8081"
+	decimal.MarshalJSONWithoutQuotes = true
 
 	log.Println("Starting exchange rate api...")
 
