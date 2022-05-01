@@ -82,15 +82,23 @@ const docTemplate = `{
                 "tags": [
                     "exchange-rate"
                 ],
-                "summary": "InsertSingleExchangeRate",
-                "responses": {
-                    "200": {
-                        "description": "OK",
+                "summary": "InsertExchangeRate",
+                "parameters": [
+                    {
+                        "description": "New exchange rate to insert. Date has to be in RFC3339 format due to gin limitation. Time part will be ignored",
+                        "name": "newExchangeRate",
+                        "in": "body",
+                        "required": true,
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/models.ExchangeRate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/models.ExchangeRate"
                         }
                     }
                 }
@@ -119,8 +127,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "203": {
+                        "description": "Non-Authoritative Information",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -231,18 +239,28 @@ const docTemplate = `{
     "definitions": {
         "models.ExchangeRate": {
             "type": "object",
+            "required": [
+                "date",
+                "destination",
+                "rate",
+                "source"
+            ],
             "properties": {
                 "date": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2022-05-01T00:00:00.00Z"
                 },
                 "destination": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "CHF"
                 },
                 "rate": {
-                    "type": "number"
+                    "type": "number",
+                    "example": 1.0456
                 },
                 "source": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "USD"
                 }
             }
         }
@@ -252,7 +270,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8081",
+	Host:             "",
 	BasePath:         "/",
 	Schemes:          []string{"http"},
 	Title:            "Rate Exchange API",

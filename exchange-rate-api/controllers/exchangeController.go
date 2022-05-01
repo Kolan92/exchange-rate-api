@@ -3,10 +3,13 @@ package controllers
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	customerros "github.com/kolan92/exchange-rate-api/custom-erros"
+	"github.com/kolan92/exchange-rate-api/models"
 	"github.com/kolan92/exchange-rate-api/repositories"
 	"gorm.io/gorm"
 )
@@ -40,7 +43,9 @@ func (controller *ExchangeRatesController) RegisterRouter(routerGroup *gin.Route
 			controller.GetAllExchangeRatesFromDate(c)
 		})
 
-		exchangeRate.POST("/", InsertSingleExchangeRate)
+		exchangeRate.POST("/", func(c *gin.Context) {
+			controller.InsertExchangeRate(c)
+		})
 
 		exchangeRate.GET("/range/", func(c *gin.Context) {
 
@@ -100,7 +105,7 @@ func (c *ExchangeRatesController) GetLastExchangeRate(g *gin.Context) {
 // @Description Returns all exchange rates for the given date
 // @Param		date	path	string	true	"Date for which exchange rates should be retrived. Date must be formated in YYYY-MM-DD"
 // @Router		/exchange-rate/all-from-date/{date}	[get]
-// @Success 	200		{object}	[]models.ExchangeRate
+// @Success 	203		{object}	[]models.ExchangeRate
 func (c *ExchangeRatesController) GetAllExchangeRatesFromDate(g *gin.Context) {
 	const dateParmKey = "date"
 	dateParam := g.Param(dateParmKey)
@@ -118,16 +123,56 @@ func (c *ExchangeRatesController) GetAllExchangeRatesFromDate(g *gin.Context) {
 	}
 }
 
-// @Summary InsertSingleExchangeRate
+// @Summary InsertExchangeRate
+// @Description Inserts new exchange rate
 // @Tags		exchange-rate
 // @Schemes
 // @Accept		json
 // @Produce		json
-// @Description Inserts new exchange rate
+// @Param		newExchangeRate	body	models.ExchangeRate	true	"New exchange rate to insert. Date has to be in RFC3339 format due to gin limitation. Time part will be ignored"
 // @Router		/exchange-rate	[post]
-// @Success 	200		{object}	map[string]string
-func InsertSingleExchangeRate(g *gin.Context) {
-	g.JSON(http.StatusOK, gin.H{"check": "ok"})
+// @Success 	204		{object}	models.ExchangeRate
+func (c *ExchangeRatesController) InsertExchangeRate(g *gin.Context) {
+	newExchangeRate := &models.ExchangeRate{}
+
+	if err := g.ShouldBindJSON(&newExchangeRate); err != nil {
+		g.AbortWithStatusJSON(http.StatusBadRequest,
+			gin.H{"error": "incorrect exchange rate in body " + err.Error()})
+		return
+	}
+
+	year, month, day := newExchangeRate.Date.Date()
+	newExchangeRate.Date = time.Date(year, month, day, 0, 00, 00, 0, time.UTC)
+
+	currencyCodesMap := c.repo.GetCurrenciesCodesIdsMap()
+	if _, isFound := currencyCodesMap[newExchangeRate.Source]; !isFound {
+		g.JSON(http.StatusBadRequest, gin.H{"error": "Unknown source currency code"})
+		return
+	}
+
+	if _, isFound := currencyCodesMap[newExchangeRate.Destination]; !isFound {
+		g.JSON(http.StatusBadRequest, gin.H{"error": "Unknown destination currency code"})
+		return
+	}
+
+	if newExchangeRate.Destination == newExchangeRate.Source {
+		g.JSON(http.StatusBadRequest, gin.H{"error": "Source and Destination currencies must be different"})
+		return
+	}
+
+	if err := c.repo.InsertExchangeRate(newExchangeRate); err != nil {
+		statusCode := errToStatusCode(err)
+		switch statusCode {
+		case http.StatusConflict:
+			g.JSON(statusCode, gin.H{"error": "Record exists for given currencies and date"})
+		default:
+			log.Println(fmt.Sprintf("Error while inserting new exchange rate to database: %s", err.Error()))
+			g.JSON(statusCode, gin.H{"error": "Error while inserting new exchange rate to database"})
+		}
+		return
+	}
+
+	g.JSON(http.StatusAccepted, &newExchangeRate)
 }
 
 // @Summary GetRangeExchangeRate
@@ -147,7 +192,7 @@ func (c *ExchangeRatesController) GetRangeExchangeRate(g *gin.Context) {
 
 	sourceCurrencyId, destinationCurrencyId, err := getCurrenciesIds(g, currencyCodesMap)
 
-	from, till, err := parseFromAdnTillDates(g)
+	from, till, err := parseFromAndTillDates(g)
 	if err != nil {
 		g.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -163,6 +208,8 @@ func (c *ExchangeRatesController) GetRangeExchangeRate(g *gin.Context) {
 
 func errToStatusCode(err error) int {
 	switch err {
+	case customerros.ErrDuplicateKeyViolation:
+		return http.StatusConflict
 	case gorm.ErrRecordNotFound:
 		return http.StatusNotFound
 	default:
@@ -190,20 +237,20 @@ func getCurrenciesIds(g *gin.Context, currencyCodesMap map[string]int) (sourceCu
 		return 0, 0, errors.New("source and destination currency are the same")
 	}
 
-	sourceCurrencyId, found := currencyCodesMap[sourceCurrencyCode]
-	if !found {
+	sourceCurrencyId, isFound := currencyCodesMap[sourceCurrencyCode]
+	if !isFound {
 		return 0, 0, errors.New(fmt.Sprintf("Unknown %s source currency", sourceCurrencyCode))
 	}
 
-	destinationCurrencyId, found = currencyCodesMap[destinationCurrencyCode]
-	if !found {
+	destinationCurrencyId, isFound = currencyCodesMap[destinationCurrencyCode]
+	if !isFound {
 		return 0, 0, errors.New(fmt.Sprintf("Unknown %s destination currency", destinationCurrencyCode))
 	}
 
 	return sourceCurrencyId, destinationCurrencyId, nil
 }
 
-func parseFromAdnTillDates(g *gin.Context) (from, till *time.Time, err error) {
+func parseFromAndTillDates(g *gin.Context) (from, till *time.Time, err error) {
 	const fromParamKey = "from"
 
 	fromParam := g.Query(fromParamKey)

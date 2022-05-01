@@ -1,11 +1,14 @@
 package repositories
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"sync"
 	"time"
 
+	"github.com/jackc/pgconn"
+	customerros "github.com/kolan92/exchange-rate-api/custom-erros"
 	"github.com/kolan92/exchange-rate-api/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -24,6 +27,7 @@ type CurrenciesRepository interface {
 	GetLastExchangeRate(sourceCurrencyId, destinationCurrencyId int) (*models.ExchangeRate, error)
 	GetAllExchangeRatesFromDate(date time.Time) ([]models.ExchangeRate, error)
 	GetRangeExchangeRate(sourceCurrencyId, destinationCurrencyId int, from, till *time.Time) ([]models.ExchangeRate, error)
+	InsertExchangeRate(exchangeRate *models.ExchangeRate) error
 }
 
 type PostgresCurrenciesRepository struct {
@@ -134,4 +138,27 @@ func (r *PostgresCurrenciesRepository) GetRangeExchangeRate(sourceCurrencyId, de
 	}
 
 	return exchangeRates, nil
+}
+
+func (r *PostgresCurrenciesRepository) InsertExchangeRate(exchangeRate *models.ExchangeRate) error {
+	codesCurrenciesIdsMap := r.GetCurrenciesCodesIdsMap()
+
+	dbExchangeRate := &models.DbExchangeRate{
+		Source:      codesCurrenciesIdsMap[exchangeRate.Source],
+		Destination: codesCurrenciesIdsMap[exchangeRate.Destination],
+		Date:        exchangeRate.Date,
+		Rate:        exchangeRate.Rate,
+	}
+	if err := r.db.Create(dbExchangeRate).Error; err != nil {
+		if pgError := err.(*pgconn.PgError); errors.Is(err, pgError) {
+			switch pgError.Code {
+			case "23505":
+				return customerros.ErrDuplicateKeyViolation
+			default:
+				return err
+			}
+
+		}
+	}
+	return nil
 }

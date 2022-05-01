@@ -45,3 +45,8 @@ func (m *MockRepository) GetAllExchangeRatesFromDate(date time.Time) ([]models.E
 func (m *MockRepository) GetRangeExchangeRate(sourceCurrencyId, destinationCurrencyId int, from, till *time.Time) ([]models.ExchangeRate, error) {
 	return []models.ExchangeRate{}, nil
 }
+
+func (m *MockRepository) InsertExchangeRate(exchangeRate *models.ExchangeRate) error {
+
+	return nil
+}

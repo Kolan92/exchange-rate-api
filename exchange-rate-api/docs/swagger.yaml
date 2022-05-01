@@ -3,15 +3,23 @@ definitions:
   models.ExchangeRate:
     properties:
       date:
+        example: "2022-05-01T00:00:00.00Z"
         type: string
       destination:
+        example: CHF
         type: string
       rate:
+        example: 1.0456
         type: number
       source:
+        example: USD
         type: string
+    required:
+    - date
+    - destination
+    - rate
+    - source
     type: object
-host: localhost:8081
 info:
   contact: {}
   description: Provides basic functionality for checking currency exchange rate.
@@ -59,16 +67,22 @@ paths:
       consumes:
       - application/json
       description: Inserts new exchange rate
+      parameters:
+      - description: New exchange rate to insert. Date has to be in RFC3339 format
+          due to gin limitation. Time part will be ignored
+        in: body
+        name: newExchangeRate
+        required: true
+        schema:
+          $ref: '#/definitions/models.ExchangeRate'
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "204":
+          description: No Content
           schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: InsertSingleExchangeRate
+            $ref: '#/definitions/models.ExchangeRate'
+      summary: InsertExchangeRate
       tags:
       - exchange-rate
   /exchange-rate/all-from-date/{date}:
@@ -86,8 +100,8 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "203":
+          description: Non-Authoritative Information
           schema:
             items:
               $ref: '#/definitions/models.ExchangeRate'

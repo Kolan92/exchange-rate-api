@@ -22,12 +22,12 @@ import (
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host localhost:8081
 // @BasePath /
 // @schemes http
 
 func main() {
 	docs.SwaggerInfo.BasePath = "/api/v1"
+	docs.SwaggerInfo.Host = "localhost:8081"
 
 	log.Println("Starting exchange rate api...")
 
@@ -59,29 +59,36 @@ func HealthCheck(g *gin.Context) {
 }
 
 func getConnectionString() string {
-	dbUser := os.Getenv("DB_USER")
+	const missingEnvVariableLog = "Missing required env variable: %s"
+
+	const dbUserVar = "DB_USER"
+	dbUser := os.Getenv(dbUserVar)
 	if dbUser == "" {
-		panic("missing dbUser")
+		panic(fmt.Sprintf(missingEnvVariableLog, dbUserVar))
 	}
 
-	dbPassword := os.Getenv("DB_PASSWORD")
+	const dbPasswordVar = "DB_PASSWORD"
+	dbPassword := os.Getenv(dbPasswordVar)
 	if dbPassword == "" {
-		panic("missing dbPassword")
+		panic(fmt.Sprintf(missingEnvVariableLog, dbPasswordVar))
 	}
 
-	dbName := os.Getenv("DB_NAME")
+	const dbNameVar = "DB_NAME"
+	dbName := os.Getenv(dbNameVar)
 	if dbName == "" {
-		panic("missing dbName")
+		panic(fmt.Sprintf(missingEnvVariableLog, dbNameVar))
 	}
 
-	dbHost := os.Getenv("DB_HOST")
+	const dbHostVar = "DB_HOST"
+	dbHost := os.Getenv(dbHostVar)
 	if dbHost == "" {
-		panic("missing dbHost")
+		panic(fmt.Sprintf(missingEnvVariableLog, dbHostVar))
 	}
 
-	dbPort := os.Getenv("DB_PORT")
+	const dbPostVar = "DB_PORT"
+	dbPort := os.Getenv(dbPostVar)
 	if dbPort == "" {
-		panic("missing dbPort")
+		panic(fmt.Sprintf(missingEnvVariableLog, dbPostVar))
 	}
 
 	return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", dbUser, dbPassword, dbHost, dbPort, dbName)
