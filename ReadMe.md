@@ -1,9 +1,6 @@
 # Rate Exchange API
 
-Databases stores all rates as nullable `NUMERIC(15, 6)`. I chose that type as all exchange rates from \*.csv are covered by it. If need it can be easily changed to hold values with higher precision.
-
-User can insert null values to database. Null exchange rates are also included in endpoints returning more than one exchange rate.
-Only when user request last exchange rate, the last non-null value is returned.
+Simple API written in GO which allows to retrive currency exchange rates between curencies.
 
 ## Run app
 
@@ -27,7 +24,6 @@ export DB_PORT=5432
 ```
 
 Command: `go run .` from exchange-rate-api directory
-
 
 ## Run tests
 
